@@ -16,9 +16,10 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
+          cache-dependency-path: requirements.lock.txt
 
-      - name: Install dependencies
-        run: python -m pip install --disable-pip-version-check -r requirements.in -r requirements-runtime-compat.txt -r requirements-build.txt
+      - name: Install locked dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.lock.txt
 
       - name: Generate icon
         run: python generate_icon.py
