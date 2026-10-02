@@ -59,6 +59,7 @@ class HistoryStore:
                 )
                 """
             )
+            db.commit()
 
     def add(
         self,
@@ -89,6 +90,7 @@ class HistoryStore:
                     status,
                 ),
             )
+            db.commit()
 
     def recent(self, limit: int = 200) -> list[HistoryEntry]:
         with closing(self._connect()) as db:
@@ -107,3 +109,4 @@ class HistoryStore:
     def clear(self) -> None:
         with closing(self._connect()) as db:
             db.execute("DELETE FROM transcriptions")
+            db.commit()
