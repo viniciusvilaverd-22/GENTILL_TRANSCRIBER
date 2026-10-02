@@ -32,7 +32,7 @@ echo "MODEL=PASS"
 
 echo
 echo "=== QA PRE-BUILD ==="
-"$BUILD_VENV/bin/python" -m unittest -v test_transcriber.py test_transcriber_e2e.py
+"$BUILD_VENV/bin/python" -m unittest -v test_transcriber.py test_transcriber_e2e.py test_product_features.py
 
 echo
 echo "=== BUILD ==="

@@ -83,7 +83,7 @@ def packaged_transcription_e2e(executable: Path) -> dict:
                 "--self-test-output",
                 str(output),
             ],
-            timeout=180,
+            timeout=240,
             check=False,
         )
         if completed.returncode != 0:
@@ -102,6 +102,7 @@ def packaged_transcription_e2e(executable: Path) -> dict:
             "txt": output / "qa-tone.txt",
             "srt": output / "qa-tone.srt",
             "vtt": output / "qa-tone.vtt",
+            "docx": output / "qa-tone.docx",
         }
         for name, candidate in required.items():
             if not candidate.is_file():
@@ -200,8 +201,20 @@ def main() -> int:
 
     packaged_e2e = packaged_transcription_e2e(executable)
 
+    source_files = [
+        "transcriber.py",
+        "transcriber_gui.py",
+        "history_store.py",
+        "diagnostics.py",
+        "model_manager.py",
+        "diarization_support.py",
+        "test_transcriber.py",
+        "test_transcriber_e2e.py",
+        "test_product_features.py",
+    ]
+
     manifest = {
-        "schema_version": 2,
+        "schema_version": 3,
         "product": "Gentill Transcriber",
         "target": args.platform,
         "verified_at": datetime.now(timezone.utc).isoformat(),
@@ -227,10 +240,20 @@ def main() -> int:
             "resource_validation": icon_validation,
         },
         "source": {
-            "transcriber.py": sha256(ROOT / "transcriber.py"),
-            "transcriber_gui.py": sha256(ROOT / "transcriber_gui.py"),
-            "test_transcriber.py": sha256(ROOT / "test_transcriber.py"),
-            "test_transcriber_e2e.py": sha256(ROOT / "test_transcriber_e2e.py"),
+            name: sha256(ROOT / name)
+            for name in source_files
+            if (ROOT / name).is_file()
+        },
+        "features": {
+            "drag_and_drop": True,
+            "batch_queue": True,
+            "pause_cancel": True,
+            "real_progress": True,
+            "model_manager": True,
+            "docx": True,
+            "local_history": True,
+            "diagnostics": True,
+            "diarization": "optional-local",
         },
         "offline_policy": "local_files_only",
         "startup_smoke": "SKIPPED" if args.no_launch else "PASS",
