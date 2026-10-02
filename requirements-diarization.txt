@@ -1,0 +1,3 @@
+# Opcional: não é incluído na release padrão.
+# A diarização continua fail-closed e exige um pipeline provisionado localmente.
+pyannote.audio>=3,<5
