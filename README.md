@@ -1,12 +1,22 @@
 # Gentill Transcriber
 
-> Desktop transcription of audio and video with local inference, offline-first execution and release validation.
+[**Português (Brasil)**](README.pt-BR.md) · **English**
+
+> Offline audio and video transcription with local Whisper inference, privacy-first execution and a verified desktop release pipeline.
+
+**Search / technologies:** audio transcription, video transcription, speech-to-text, ASR, Whisper offline, faster-whisper, CTranslate2, Python desktop app, Windows, local AI, private transcription, SRT subtitles, VTT subtitles, PyInstaller.
 
 [![Windows CI](https://github.com/viniciusvilaverd-22/GENTILL_TRANSCRIBER/actions/workflows/windows-ci.yml/badge.svg)](https://github.com/viniciusvilaverd-22/GENTILL_TRANSCRIBER/actions/workflows/windows-ci.yml)
 
 **Gentill Transcriber** is a Python desktop application that turns audio and video into text without sending media to a cloud transcription API. It uses `faster-whisper` + CTranslate2 with a local model and exports TXT, JSON, SRT and VTT.
 
 > PT-BR: transcrição local de áudio e vídeo com foco em privacidade, uso offline e um processo de release verificável.
+
+## Technologies and search terms
+
+Python · faster-whisper · OpenAI Whisper-compatible models · CTranslate2 · Tkinter/ttk · PyInstaller · PyAV · GitHub Actions · Windows desktop · offline speech recognition · speech-to-text · audio transcription · video transcription · subtitles · SRT · VTT · JSON · local AI · privacy.
+
+Portuguese search terms: **transcrição de áudio**, **transcrição de vídeo**, **transcrição offline**, **Whisper offline**, **IA local**, **reconhecimento de voz**, **legendas SRT**, **legendas VTT**, **programa de transcrição para Windows**.
 
 ## Why this project matters
 
