@@ -22,6 +22,20 @@ This repository is not only a GUI around Whisper. It covers the full path from i
 - SHA-256 release manifest;
 - RC → release promotion only after QA passes.
 
+## Download
+
+Windows release candidate:
+
+- [Gentill Transcriber v0.3.0-rc1](https://github.com/viniciusvilaverd-22/GENTILL_TRANSCRIBER/releases/tag/v0.3.0-rc1)
+- [Windows ZIP](https://github.com/viniciusvilaverd-22/GENTILL_TRANSCRIBER/releases/download/v0.3.0-rc1/Gentill-Transcriber-Windows-v0.3.0-rc1.zip)
+- [Release manifest](https://github.com/viniciusvilaverd-22/GENTILL_TRANSCRIBER/releases/download/v0.3.0-rc1/RELEASE_MANIFEST_windows.json)
+
+Release archive SHA-256:
+
+`25b6ab459d9a0f45f65f1699c215e89883e08075fbfcfdd0356d1a6704b145c9`
+
+The release was built and verified by GitHub Actions before publication.
+
 ## Current status
 
 **Version:** `0.3.0-rc1`
