@@ -1,4 +1,4 @@
-# Gentill Transcriber 0.4 — Product upgrade
+# Gentill Transcriber 0.4.0-rc1 — Product upgrade
 
 Esta fase transforma o projeto de um transcritor de arquivo único em um aplicativo desktop de uso contínuo.
 

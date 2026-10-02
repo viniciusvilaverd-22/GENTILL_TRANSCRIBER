@@ -5,7 +5,7 @@ on:
     tags:
       - "v*"
     branches:
-      - "release/v0.3.0-rc1"
+      - "release/v0.4.0-rc1"
 
 permissions:
   contents: write
@@ -13,6 +13,7 @@ permissions:
 jobs:
   build-release:
     runs-on: windows-latest
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -20,10 +21,17 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
-          cache-dependency-path: requirements.lock.txt
+          cache-dependency-path: |
+            requirements.in
+            requirements-runtime-compat.txt
+            requirements-build.txt
 
-      - name: Install locked dependencies
-        run: python -m pip install --disable-pip-version-check -r requirements.lock.txt
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.in -r requirements-runtime-compat.txt -r requirements-build.txt
+
+      - name: Freeze exact release environment
+        shell: pwsh
+        run: python -m pip freeze --all | Out-File -FilePath requirements-lock-release.txt -Encoding utf8
 
       - name: Generate icon
         run: python generate_icon.py
@@ -32,13 +40,52 @@ jobs:
         run: python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='Systran/faster-whisper-small', local_dir='models/whisper-small-ct2')"
 
       - name: Test
-        run: python -m unittest -v test_transcriber.py test_transcriber_e2e.py
+        run: python -m unittest -v test_transcriber.py test_transcriber_e2e.py test_product_features.py
 
-      - name: Build Windows RC
+      - name: Build Full Offline
         run: python -m PyInstaller --noconfirm --clean --distpath dist-rc --workpath build-rc gentill_transcriber.spec
 
-      - name: Verify packaged executable
+      - name: Sign Full Offline when certificate is configured
+        run: python sign_windows.py "dist-rc\Gentill Transcriber\Gentill Transcriber.exe"
+
+      - name: Verify Full Offline executable
         run: python verify_release.py --platform windows --dist-root dist-rc
+
+      - name: Prepare installer payload
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "dist" | Out-Null
+          Copy-Item -Recurse -Force "dist-rc\Gentill Transcriber" "dist\Gentill Transcriber"
+
+      - name: Build uninstaller
+        run: python -m PyInstaller --noconfirm --clean --distpath dist-installer-tools --workpath build-installer-tools gentill_uninstaller.spec
+
+      - name: Sign uninstaller when certificate is configured
+        run: python sign_windows.py "dist-installer-tools\Gentill Transcriber Uninstall.exe"
+
+      - name: Build Setup
+        run: python -m PyInstaller --noconfirm --clean --distpath dist-installer --workpath build-installer gentill_installer.spec
+
+      - name: Sign Setup when certificate is configured
+        run: python sign_windows.py "dist-installer\Gentill Transcriber Setup.exe"
+
+      - name: Verify Setup
+        run: python verify_installer.py --installer "dist-installer\Gentill Transcriber Setup.exe"
+
+      - name: Build Lite
+        run: python -m PyInstaller --noconfirm --clean --distpath dist-lite --workpath build-lite gentill_transcriber_lite.spec
+
+      - name: Sign Lite when certificate is configured
+        run: python sign_windows.py "dist-lite\Gentill Transcriber Lite\Gentill Transcriber Lite.exe"
+
+      - name: Smoke Lite
+        shell: pwsh
+        run: |
+          $exe = Resolve-Path "dist-lite\Gentill Transcriber Lite\Gentill Transcriber Lite.exe"
+          $process = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 5
+          if ($process.HasExited) { throw "Lite application exited during startup smoke: $($process.ExitCode)" }
+          Stop-Process -Id $process.Id -Force
 
       - name: Resolve release tag
         shell: pwsh
@@ -46,19 +93,55 @@ jobs:
           if ("${{ github.ref_type }}" -eq "tag") {
             $tag = "${{ github.ref_name }}"
           } else {
-            $tag = "v0.3.0-rc1"
+            $tag = "v0.4.0-rc1"
           }
           "RELEASE_TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Package release
+      - name: Package assets
         shell: pwsh
         run: |
-          $name = "Gentill-Transcriber-Windows-$env:RELEASE_TAG.zip"
-          Compress-Archive -Path "dist-rc\Gentill Transcriber", "dist-rc\RELEASE_MANIFEST_windows.json" -DestinationPath $name
-          "RELEASE_ARCHIVE=$name" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $full = "Gentill-Transcriber-Full-Offline-Windows-$env:RELEASE_TAG.zip"
+          $lite = "Gentill-Transcriber-Lite-Windows-$env:RELEASE_TAG.zip"
+          $setup = "Gentill-Transcriber-Setup-Windows-$env:RELEASE_TAG.exe"
+          Compress-Archive -Path "dist-rc\Gentill Transcriber", "dist-rc\RELEASE_MANIFEST_windows.json" -DestinationPath $full
+          Compress-Archive -Path "dist-lite\Gentill Transcriber Lite" -DestinationPath $lite
+          Copy-Item "dist-installer\Gentill Transcriber Setup.exe" $setup
+          "FULL_ARCHIVE=$full" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "LITE_ARCHIVE=$lite" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "SETUP_ASSET=$setup" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Generate checksums
+        shell: pwsh
+        run: |
+          @(
+            $env:FULL_ARCHIVE,
+            $env:LITE_ARCHIVE,
+            $env:SETUP_ASSET,
+            "dist-rc\RELEASE_MANIFEST_windows.json",
+            "requirements-lock-release.txt"
+          ) | ForEach-Object {
+            $h = Get-FileHash -Algorithm SHA256 $_
+            "$($h.Hash.ToLower())  $($_)"
+          } | Out-File -FilePath SHA256SUMS.txt -Encoding ascii
 
       - name: Publish GitHub Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$env:RELEASE_TAG" "$env:RELEASE_ARCHIVE" "dist-rc\RELEASE_MANIFEST_windows.json" --target "${{ github.sha }}" --title "Gentill Transcriber $env:RELEASE_TAG" --generate-notes
+        run: |
+          $common = @(
+            "release", "create", $env:RELEASE_TAG,
+            $env:FULL_ARCHIVE,
+            $env:LITE_ARCHIVE,
+            $env:SETUP_ASSET,
+            "dist-rc\RELEASE_MANIFEST_windows.json",
+            "requirements-lock-release.txt",
+            "SHA256SUMS.txt",
+            "--target", "${{ github.sha }}",
+            "--title", "Gentill Transcriber $env:RELEASE_TAG",
+            "--generate-notes"
+          )
+          if ($env:RELEASE_TAG -match "-(rc|beta|alpha)") {
+            $common += "--prerelease"
+          }
+          & gh @common

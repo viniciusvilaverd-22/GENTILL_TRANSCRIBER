@@ -43,7 +43,7 @@ APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False)
 DEFAULT_MODEL = RESOURCE_DIR / "models" / "whisper-small-ct2"
 DEFAULT_OUTPUT = Path.home() / "Documents" / "Gentill Transcriber" / "Transcricoes"
 APP_ICON = RESOURCE_DIR / "assets" / "gentill_transcriber.ico"
-APP_VERSION = "0.4.0-dev"
+APP_VERSION = "0.4.0-rc1"
 
 ABOUT_AUTHOR = "Vinícius Vilaverde"
 ABOUT_ORGANIZATION = "Gentill Ops"

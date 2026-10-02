@@ -16,16 +16,19 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
-          cache-dependency-path: requirements.lock.txt
+          cache-dependency-path: |
+            requirements.in
+            requirements-runtime-compat.txt
+            requirements-build.txt
 
-      - name: Install locked dependencies
-        run: python -m pip install --disable-pip-version-check -r requirements.lock.txt
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.in -r requirements-runtime-compat.txt -r requirements-build.txt
 
       - name: Generate icon
         run: python generate_icon.py
 
-      - name: Unit and compatibility gates
-        run: python -m unittest -v test_transcriber.py test_transcriber_e2e.ValidationTests
+      - name: Unit, compatibility and product gates
+        run: python -m unittest -v test_transcriber.py test_transcriber_e2e.ValidationTests test_product_features.py
 
-      - name: Compile Python sources
-        run: python -m compileall -q transcriber.py transcriber_gui.py verify_release.py generate_icon.py promote_windows_release.py
+      - name: Compile product sources
+        run: python -m compileall -q transcriber.py transcriber_gui.py history_store.py diagnostics.py diarization_support.py model_manager.py installer_windows.py uninstaller_windows.py verify_release.py verify_installer.py sign_windows.py

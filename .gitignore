@@ -36,3 +36,5 @@ dist-installer/
 dist-installer-tools/
 dist-lite/
 *.sqlite3
+requirements.lock.txt
+requirements-lock-release.txt

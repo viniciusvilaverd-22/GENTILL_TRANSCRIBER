@@ -11,7 +11,7 @@ from tkinter import messagebox, ttk
 
 
 APP_NAME = "Gentill Transcriber"
-APP_VERSION = "0.4.0-dev"
+APP_VERSION = "0.4.0-rc1"
 SOURCE_DIR = Path(__file__).resolve().parent
 RESOURCE_DIR = Path(getattr(sys, "_MEIPASS", SOURCE_DIR))
 PAYLOAD = RESOURCE_DIR / "payload" / APP_NAME
