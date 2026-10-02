@@ -1,0 +1,2 @@
+# Baseline de dependências; um lock exato será gerado após validação no LAB.
+faster-whisper>=1.1,<2

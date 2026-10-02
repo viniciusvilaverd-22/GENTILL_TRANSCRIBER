@@ -1,0 +1,51 @@
+name: Windows Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.in -r requirements-runtime-compat.txt -r requirements-build.txt
+
+      - name: Generate icon
+        run: python generate_icon.py
+
+      - name: Provision local Whisper model
+        run: python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='Systran/faster-whisper-small', local_dir='models/whisper-small-ct2')"
+
+      - name: Test
+        run: python -m unittest -v test_transcriber.py test_transcriber_e2e.py
+
+      - name: Build Windows RC
+        run: python -m PyInstaller --noconfirm --clean --distpath dist-rc --workpath build-rc gentill_transcriber.spec
+
+      - name: Verify packaged executable
+        run: python verify_release.py --platform windows --dist-root dist-rc
+
+      - name: Package release
+        shell: pwsh
+        run: |
+          $name = "Gentill-Transcriber-Windows-${{ github.ref_name }}.zip"
+          Compress-Archive -Path "dist-rc\Gentill Transcriber", "dist-rc\RELEASE_MANIFEST_windows.json" -DestinationPath $name
+          "RELEASE_ARCHIVE=$name" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" "$env:RELEASE_ARCHIVE" "dist-rc\RELEASE_MANIFEST_windows.json" --title "Gentill Transcriber ${{ github.ref_name }}" --generate-notes

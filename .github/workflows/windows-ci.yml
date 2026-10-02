@@ -1,0 +1,30 @@
+name: Windows CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.in -r requirements-runtime-compat.txt -r requirements-build.txt
+
+      - name: Generate icon
+        run: python generate_icon.py
+
+      - name: Unit and compatibility gates
+        run: python -m unittest -v test_transcriber.py test_transcriber_e2e.ValidationTests
+
+      - name: Compile Python sources
+        run: python -m compileall -q transcriber.py transcriber_gui.py verify_release.py generate_icon.py promote_windows_release.py
