@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -42,7 +43,7 @@ class HistoryStore:
         return sqlite3.connect(self.path)
 
     def _init(self) -> None:
-        with self._connect() as db:
+        with closing(self._connect()) as db:
             db.execute(
                 """
                 CREATE TABLE IF NOT EXISTS transcriptions (
@@ -70,7 +71,7 @@ class HistoryStore:
         elapsed: float,
         status: str,
     ) -> None:
-        with self._connect() as db:
+        with closing(self._connect()) as db:
             db.execute(
                 """
                 INSERT INTO transcriptions
@@ -90,7 +91,7 @@ class HistoryStore:
             )
 
     def recent(self, limit: int = 200) -> list[HistoryEntry]:
-        with self._connect() as db:
+        with closing(self._connect()) as db:
             rows = db.execute(
                 """
                 SELECT id, created_at, input_path, output_dir, model, language,
@@ -104,5 +105,5 @@ class HistoryStore:
         return [HistoryEntry(*row) for row in rows]
 
     def clear(self) -> None:
-        with self._connect() as db:
+        with closing(self._connect()) as db:
             db.execute("DELETE FROM transcriptions")
