@@ -28,3 +28,11 @@ RUNTIME_BOOTSTRAP_SPEC.md
 assets/*.ico
 .DS_Store
 Thumbs.db
+
+build-installer/
+build-installer-tools/
+build-lite/
+dist-installer/
+dist-installer-tools/
+dist-lite/
+*.sqlite3
